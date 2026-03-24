@@ -325,6 +325,18 @@ def main(args):
         print(f'Max Accuracy: {max_accuracy:.4f}')
         print(f'Max F1: {max_f1:.4f}')
 
+        # --- fine-tuned model save code ---
+        if args.output_dir:
+            # if test_stats["acc1"] == max_accuracy:
+            #     torch.save(model_without_ddp.state_dict(), os.path.join(args.output_dir, 'best_acc_model.pth'))
+            if test_stats["macro_f1"] == max_f1:
+                torch.save(model_without_ddp.state_dict(), os.path.join(args.output_dir, 'best_f1_model.pth'))
+
+            # 마지막 에포크인 경우 최종 모델 저장
+            if epoch == args.epochs - 1:
+                torch.save(model_without_ddp.state_dict(), os.path.join(args.output_dir, 'last_model.pth'))
+        # ----------------------------------
+
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                      **{f'test_{k}': v for k, v in test_stats.items()},
                      'epoch': epoch,
