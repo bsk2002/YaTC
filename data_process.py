@@ -48,6 +48,7 @@ def MFR_generator(flows_pcap_path, output_path):
     makedir(output_path)
     makedir(output_path + "/train")
     makedir(output_path + "/test")
+    makedir(output_path + "/valid")
     classes = glob.glob(flows_pcap_path + "/*/*")
     for cla in tqdm(classes):
         makedir(cla.replace(flows_pcap_path, output_path))
@@ -58,3 +59,9 @@ def MFR_generator(flows_pcap_path, output_path):
         fh = np.uint8(fh)
         im = Image.fromarray(fh)
         im.save(flow.replace('.pcap', '.png').replace(flows_pcap_path, output_path))
+
+if __name__ == '__main__':
+    flows_pcap_path = "./data/captured_TLS1.3"
+    output_path = "."
+    
+    MFR_generator(flows_pcap_path, output_path)
