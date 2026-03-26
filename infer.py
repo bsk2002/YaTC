@@ -4,8 +4,9 @@ import torch
 from PIL import Image
 from torchvision import transforms
 import models_YaTC
+import numpy as np
 
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix, classification_report
 
 def get_args_parser():
     parser = argparse.ArgumentParser('YaTC inference', add_help=False)
@@ -93,6 +94,8 @@ def main(args):
         if len(y_true) > 0:
             acc = accuracy_score(y_true, y_pred)
             macro = precision_recall_fscore_support(y_true, y_pred, average='weighted', zero_division=0)
+
+            cm = confusion_matrix(y_true, y_pred)
             
             print("\n" + "="*30)
             print("Inference Evaluation Results")
@@ -103,6 +106,25 @@ def main(args):
             print(f"Recall        : {macro[1]:.4f}")
             print(f"F1 Score      : {macro[2]:.4f}")
             print("="*30)
+
+            print("\n[Classification Report]")
+            print(classification_report(y_true, y_pred, target_names=classes, zero_division=0))
+
+            # 오답 분석: 각 클래스별로 틀린 개수 계산
+            print("\n[Error Analysis - Top Missed Classes]")
+            # 대각선 요소(맞춘 개수)를 0으로 설정하여 틀린 개수만 추출
+            cm_errors = cm.copy()
+            np.fill_diagonal(cm_errors, 0)
+            
+            # 행(True label) 기준 오답 합계 계산
+            row_errors = np.sum(cm_errors, axis=1)
+            
+            # 오답이 많은 순서대로 정렬하여 출력
+            error_indices = np.argsort(row_errors)[::-1]
+            for idx in error_indices:
+                if row_errors[idx] > 0:
+                    print(f"Class '{classes[idx]}' missed {row_errors[idx]} times.")
+                    
         else:
             print("No image files found in the specified directory.")
     else:
