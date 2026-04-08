@@ -78,24 +78,44 @@ def read_MFR_bytes(pcap_dir):
     return final_data
 
 def MFR_generator(flows_pcap_path, output_path):
-    flows = glob.glob(flows_pcap_path + "/*/*/*.pcap")
+    flows = glob.glob(flows_pcap_path + "/**/*.pcap", recursive=True)
     makedir(output_path)
     makedir(output_path + "/train")
     makedir(output_path + "/test")
     makedir(output_path + "/valid")
-    classes = glob.glob(flows_pcap_path + "/*/*")
+    classes = glob.glob(flows_pcap_path + "/*")
     for cla in tqdm(classes):
         makedir(cla.replace(flows_pcap_path, output_path))
+
+    processed_dirs = set()
+
     for flow in tqdm(flows):
+        parent_dir = os.path.dirname(flow) # 현재 파일이 속한 폴더 경로
+        if parent_dir in processed_dirs:   # 이미 이 폴더에서 하나 처리했다면 패스
+            continue
+        
+        relative_path = os.path.relpath(flow, flows_pcap_path)
+        sni_name = relative_path.split(os.sep)[0]
+
+        target_dir = os.path.join(output_path, sni_name)
+        os.makedirs(target_dir, exist_ok=True)
+
         content = read_MFR_bytes(flow)
         content = np.array([int(content[i:i + 2], 16) for i in range(0, len(content), 2)])
         fh = np.reshape(content, (40, 40))
         fh = np.uint8(fh)
         im = Image.fromarray(fh)
-        im.save(flow.replace('.pcap', '.png').replace(flows_pcap_path, output_path))
+
+        file_name = os.path.basename(flow).replace('.pcap', '.png')
+        save_path = os.path.join(target_dir, file_name)
+
+        im.save(save_path)
+        # im.save(flow.replace('.pcap', '.png').replace(flows_pcap_path, output_path))
+
+        processed_dirs.add(parent_dir)
 
 if __name__ == '__main__':
-    flows_pcap_path = "/home/sangkyoung/Desktop/captured"
-    output_path = "."
+    flows_pcap_path = "/home/sangkyoung/ntc/ntcexper/tls13only"
+    output_path = "./tmp"
     
     MFR_generator(flows_pcap_path, output_path)

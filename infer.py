@@ -5,6 +5,9 @@ from PIL import Image
 from torchvision import transforms
 import models_YaTC
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix, classification_report
 
@@ -87,8 +90,8 @@ def main(args):
                     # 결과 누적
                     y_true.append(true_label)
                     y_pred.append(pred_class)
-                    
-                    print(f"Class: {dirname} | File: {filename} | True: {true_label} | Pred: {pred_class}")
+                    if pred_class is not true_label:
+                        print(f"Class: {dirname} | File: {filename} | True: {true_label} | Pred: {pred_class}")
 
         # 2. 전체 데이터세트에 대한 평가 지표 계산
         if len(y_true) > 0:
@@ -97,6 +100,29 @@ def main(args):
 
             cm = confusion_matrix(y_true, y_pred)
             
+            # --- Confusion Matrix 저장 코드 추가 시작 ---
+            save_path = "confusion_matrix.png"
+            
+            # 클래스 수가 많으므로 이미지 크기를 충분히 크게 잡습니다 (예: 20x20)
+            plt.figure(figsize=(25, 20)) 
+            
+            # Seaborn Heatmap 생성
+            # annot=False: 클래스가 너무 많으면 숫자가 겹치므로 끕니다. 
+            # 필요하다면 annot=True로 변경하세요.
+            sns.heatmap(cm, annot=False, fmt='d', cmap='Blues',
+                        xticklabels=classes, yticklabels=classes)
+            
+            plt.title('Inference Confusion Matrix', fontsize=20)
+            plt.xlabel('Predicted Label', fontsize=15)
+            plt.ylabel('True Label', fontsize=15)
+            plt.xticks(rotation=90, fontsize=8) # x축 글자 90도 회전
+            plt.yticks(fontsize=8)
+            
+            plt.tight_layout()
+            plt.savefig(save_path, dpi=300) # 고해상도 저장
+            print(f"\n[Info] Confusion Matrix saved to: {save_path}")
+            plt.close() # 메모리 해제
+
             print("\n" + "="*30)
             print("Inference Evaluation Results")
             print("="*30)
